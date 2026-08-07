@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Fixed Garage — Cuadros y componentes de pista</title>
+  <meta name="description" content="Cuadros y componentes raros para bicicletas fixed y de pista. Colección personal y piezas seleccionadas en venta." />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <header class="site-header">
+    <div class="header-inner">
+      <a href="#top" class="wordmark">
+        <img src="logo.png" alt="Fixed Garage" class="wordmark-logo" />
+      </a>
+      <nav class="main-nav" aria-label="Navegación principal">
+        <a href="#for-sale">En venta</a>
+        <a href="#collection">Colección</a>
+        <a href="#contact">Contacto</a>
+      </nav>
+    </div>
+  </header>
+
+  <main id="top">
+
+    <section class="hero">
+      <img src="logo.png" alt="" class="hero-motif" aria-hidden="true" />
+      <div class="hero-inner">
+        <p class="hero-eyebrow">Buenos Aires, Argentina</p>
+        <h1 class="hero-title">Cuadros y componentes de ciclismo de pista</h1>
+        <p class="hero-sub">
+          Compro lo que me gusta, disfruto lo que colecciono, y dejo ir lo
+          que ya cumplió su tiempo conmigo — para que quede en buenas manos.
+          Cada pieza acá está seleccionada y cuidada como si fuera mía.
+          Porque lo fue.
+        </p>
+        <div class="hero-actions">
+          <a href="#for-sale" class="btn btn-primary">Ver cuadros en venta</a>
+          <a href="https://www.instagram.com/fixedgarage.arg/" target="_blank" rel="noopener" class="btn btn-ghost">Instagram →</a>
+        </div>
+      </div>
+    </section>
+
+    <section id="for-sale" class="section">
+      <div class="section-inner">
+        <div class="section-head">
+          <h2>En venta</h2>
+          <p class="cotizacion" id="cotizacion-info" aria-live="polite"></p>
+        </div>
+
+        <div id="for-sale-grid" class="tag-grid">
+          <p class="loading-msg" id="for-sale-loading">Cargando cuadros…</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="collection" class="section section-collection">
+      <div class="section-inner">
+        <div class="section-head">
+          <h2>Colección</h2>
+          <p class="section-note">Piezas personales — no están a la venta.</p>
+        </div>
+
+        <div id="collection-grid" class="collection-grid">
+          <p class="loading-msg" id="collection-loading">Cargando colección…</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="contact" class="section section-contact">
+      <div class="section-inner contact-inner">
+        <h2>¿Te interesa una pieza?</h2>
+        <p>La venta se coordina directo por Instagram o WhatsApp. Nada de carritos ni pagos online acá.</p>
+        <div class="contact-actions">
+          <a href="https://www.instagram.com/fixedgarage.arg/" target="_blank" rel="noopener" class="btn btn-primary">
+            Escribir por Instagram
+          </a>
+          <a href="https://wa.me/5490000000000" target="_blank" rel="noopener" class="btn btn-ghost">
+            Escribir por WhatsApp
+          </a>
+        </div>
+        <p class="contact-fineprint">
+          * Reemplazá el número de WhatsApp en <code>web/index.html</code> por el tuyo.
+        </p>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="site-footer">
+    <p>Fixed Garage — Mat Schvartzman · @fixedgarage.arg</p>
+  </footer>
+
+  <template id="frame-card-template">
+    <article class="frame-card">
+      <div class="frame-card-photo">
+        <img alt="" loading="lazy" />
+        <span class="frame-stamp"></span>
+      </div>
+      <div class="frame-tag">
+        <div class="frame-tag-row">
+          <span class="frame-tag-label">Marca</span>
+          <span class="frame-tag-value frame-brand"></span>
+        </div>
+        <div class="frame-tag-row">
+          <span class="frame-tag-label">Modelo</span>
+          <span class="frame-tag-value frame-model"></span>
+        </div>
+        <div class="frame-tag-row frame-size-row">
+          <span class="frame-tag-label">Talle</span>
+          <span class="frame-tag-value frame-size"></span>
+        </div>
+        <p class="frame-description"></p>
+        <div class="frame-price-block">
+          <span class="frame-price-usd"></span>
+          <span class="frame-price-ars"></span>
+        </div>
+      </div>
+    </article>
+  </template>
+
+  <template id="collection-card-template">
+    <article class="collection-card">
+      <div class="collection-card-photo">
+        <img alt="" loading="lazy" />
+      </div>
+      <div class="collection-card-body">
+        <p class="collection-brand-model"></p>
+        <p class="collection-caption"></p>
+      </div>
+    </article>
+  </template>
+
+  <script src="app.js"></script>
+</body>
+</html>
