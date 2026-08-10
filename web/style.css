@@ -274,17 +274,88 @@ h1, h2, h3 {
   flex-direction: column;
 }
 
-.frame-card-photo {
+.frame-card-photos {
   position: relative;
   aspect-ratio: 4 / 3;
   background: var(--surface-raised);
+  overflow: hidden;
 }
 
-.frame-card-photo img {
+.frame-card-photos-track {
+  display: flex;
+  height: 100%;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  cursor: grab;
+  user-select: none;
+}
+.frame-card-photos-track::-webkit-scrollbar { display: none; }
+
+.frame-card-photos-track.is-dragging {
+  cursor: grabbing;
+  scroll-snap-type: none;
+}
+
+.frame-card-photo-slide {
+  flex: 0 0 100%;
+  scroll-snap-align: start;
+  height: 100%;
+}
+
+.frame-card-photo-slide img {
   width: 100%;
   height: 100%;
   object-fit: cover;
   display: block;
+  -webkit-user-drag: none;
+  user-select: none;
+}
+
+.frame-card-nav-btn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 1px solid var(--border-strong);
+  background: rgba(0, 0, 0, 0.65);
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+  z-index: 2;
+}
+.frame-card-nav-btn:hover { background: rgba(0, 0, 0, 0.9); }
+.frame-card-nav-btn.prev { left: 10px; }
+.frame-card-nav-btn.next { right: 10px; }
+
+.frame-card-dots {
+  position: absolute;
+  bottom: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 6px;
+  z-index: 2;
+}
+
+.frame-card-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.35);
+  transition: background 0.15s ease, transform 0.15s ease;
+}
+.frame-card-dot.active {
+  background: var(--text);
+  transform: scale(1.3);
 }
 
 /* El sello rotado tipo estampa de taller */
@@ -375,6 +446,14 @@ h1, h2, h3 {
 .frame-price-ars {
   font-size: 0.75rem;
   color: var(--text-muted);
+}
+
+/* ============================================
+   Sold section (vendidos, con sello puesto)
+   ============================================ */
+
+.section-sold {
+  background: var(--surface);
 }
 
 /* ============================================

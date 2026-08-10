@@ -9,7 +9,7 @@
 
 // Cambiá esto por la URL de tu backend cuando lo deployes (Railway/Render).
 // Mientras desarrollás local, apunta a tu servidor de uvicorn.
-const API_BASE_URL = "http://localhost:8000";
+const API_BASE_URL = "https://fixedgarage-production.up.railway.app";
 const INTERVALO_ACTUALIZACION_COTIZACION_MS = 60 * 1000; // 1 minuto
 
 const ESTADO_LABELS = {
@@ -37,11 +37,12 @@ document.addEventListener("DOMContentLoaded", () => {
  */
 async function cargarCatalogo() {
   const grid = document.getElementById("for-sale-grid");
+  const soldGrid = document.getElementById("sold-grid");
   const cotizacionInfo = document.getElementById("cotizacion-info");
 
   try {
     const [cuadros, cotizacion] = await Promise.all([
-      obtenerJSON(`${API_BASE_URL}/catalogo/?status=available`),
+      obtenerJSON(`${API_BASE_URL}/catalogo/`),
       obtenerJSON(`${API_BASE_URL}/catalogo/cotizacion`),
     ]);
 
@@ -50,17 +51,28 @@ async function cargarCatalogo() {
       cotizacionInfo.textContent = `Dólar blue: $${formateado}`;
     }
 
-    grid.innerHTML = "";
+    // Separamos vendidos del resto: "En venta" muestra disponibles/reservados,
+    // "Vendidos" es una sección aparte con el sello puesto.
+    const disponibles = cuadros.filter((cuadro) => cuadro.status !== "sold");
+    const vendidos = cuadros.filter((cuadro) => cuadro.status === "sold");
 
-    if (cuadros.length === 0) {
+    grid.innerHTML = "";
+    if (disponibles.length === 0) {
       grid.innerHTML = `<p class="empty-msg">No hay cuadros disponibles en este momento. Volvé a chequear pronto.</p>`;
-      return;
+    } else {
+      disponibles.forEach((cuadro) => grid.appendChild(crearFrameCard(cuadro)));
     }
 
-    cuadros.forEach((cuadro) => grid.appendChild(crearFrameCard(cuadro)));
+    soldGrid.innerHTML = "";
+    if (vendidos.length === 0) {
+      soldGrid.innerHTML = `<p class="empty-msg">Todavía no hay cuadros vendidos para mostrar.</p>`;
+    } else {
+      vendidos.forEach((cuadro) => soldGrid.appendChild(crearFrameCard(cuadro)));
+    }
   } catch (error) {
     console.error("Error cargando el catálogo:", error);
     grid.innerHTML = `<p class="empty-msg">No pudimos cargar el catálogo. Probá recargar la página en un momento.</p>`;
+    soldGrid.innerHTML = "";
   }
 }
 
@@ -122,18 +134,99 @@ async function actualizarCotizacionEnPantalla() {
   }
 }
 
+function habilitarArrastreDesktop(track) {
+  let arrastrando = false;
+  let posicionInicialX = 0;
+  let scrollInicial = 0;
+
+  track.addEventListener("pointerdown", (evento) => {
+    if (evento.pointerType !== "mouse") return;
+    arrastrando = true;
+    track.classList.add("is-dragging");
+    track.style.scrollBehavior = "auto";
+    posicionInicialX = evento.clientX;
+    scrollInicial = track.scrollLeft;
+    track.setPointerCapture(evento.pointerId);
+  });
+
+  track.addEventListener("pointermove", (evento) => {
+    if (!arrastrando) return;
+    track.scrollLeft = scrollInicial - (evento.clientX - posicionInicialX);
+  });
+
+  const terminarArrastre = () => {
+    if (!arrastrando) return;
+    arrastrando = false;
+    track.classList.remove("is-dragging");
+    track.style.scrollBehavior = "smooth";
+    const indiceMasCercano = Math.round(track.scrollLeft / track.clientWidth);
+    track.scrollTo({ left: indiceMasCercano * track.clientWidth, behavior: "smooth" });
+  };
+
+  track.addEventListener("pointerup", terminarArrastre);
+  track.addEventListener("pointerleave", terminarArrastre);
+}
+
 /** Clona el <template id="frame-card-template"> y lo completa con los datos de un cuadro. */
 function crearFrameCard(cuadro) {
   const template = document.getElementById("frame-card-template");
   const node = template.content.cloneNode(true);
 
-  const foto = node.querySelector(".frame-card-photo img");
-  const primeraFoto = cuadro.photos?.[0];
-  if (primeraFoto) {
-    foto.src = primeraFoto.url;
-    foto.alt = `${cuadro.brand} ${cuadro.model}`;
+  const photosContainer = node.querySelector(".frame-card-photos");
+  const track = node.querySelector(".frame-card-photos-track");
+  const prevBtn = node.querySelector(".frame-card-nav-btn.prev");
+  const nextBtn = node.querySelector(".frame-card-nav-btn.next");
+  const dotsContainer = node.querySelector(".frame-card-dots");
+  const fotos = cuadro.photos ?? [];
+
+  if (fotos.length === 0) {
+    photosContainer.style.display = "none";
   } else {
-    foto.closest(".frame-card-photo").style.display = "none";
+    fotos.forEach((foto) => {
+      const slide = document.createElement("div");
+      slide.className = "frame-card-photo-slide";
+
+      const img = document.createElement("img");
+      img.src = foto.url;
+      img.alt = `${cuadro.brand} ${cuadro.model}`;
+      img.loading = "lazy";
+
+      slide.appendChild(img);
+      track.appendChild(slide);
+    });
+
+    if (fotos.length > 1) {
+      const dots = fotos.map((_, indice) => {
+        const dot = document.createElement("span");
+        dot.className = "frame-card-dot";
+        if (indice === 0) dot.classList.add("active");
+        dotsContainer.appendChild(dot);
+        return dot;
+      });
+
+      const marcarDotActivo = () => {
+        const indiceActual = Math.round(track.scrollLeft / track.clientWidth);
+        dots.forEach((dot, indice) => dot.classList.toggle("active", indice === indiceActual));
+      };
+
+      const irASlide = (indice) => {
+        const indiceValido = Math.max(0, Math.min(indice, fotos.length - 1));
+        track.scrollTo({ left: indiceValido * track.clientWidth, behavior: "smooth" });
+      };
+
+      prevBtn.addEventListener("click", () => {
+        irASlide(Math.round(track.scrollLeft / track.clientWidth) - 1);
+      });
+      nextBtn.addEventListener("click", () => {
+        irASlide(Math.round(track.scrollLeft / track.clientWidth) + 1);
+      });
+      track.addEventListener("scroll", marcarDotActivo);
+
+      habilitarArrastreDesktop(track);
+    } else {
+      prevBtn.style.display = "none";
+      nextBtn.style.display = "none";
+    }
   }
 
   const stamp = node.querySelector(".frame-stamp");
@@ -146,7 +239,7 @@ function crearFrameCard(cuadro) {
   node.querySelector(".frame-description").textContent = cuadro.description;
 
   node.querySelector(".frame-price-usd").textContent =
-    `USD ${new Intl.NumberFormat("en-US").format(cuadro.price)}`;
+    `${cuadro.currency} ${new Intl.NumberFormat("en-US").format(cuadro.price)}`;
 
   const arsEl = node.querySelector(".frame-price-ars");
   if (cuadro.price_ars) {

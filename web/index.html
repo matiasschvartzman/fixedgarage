@@ -21,6 +21,7 @@
       </a>
       <nav class="main-nav" aria-label="Navegación principal">
         <a href="#for-sale">En venta</a>
+        <a href="#sold">Vendidos</a>
         <a href="#collection">Colección</a>
         <a href="#contact">Contacto</a>
       </nav>
@@ -60,6 +61,19 @@
       </div>
     </section>
 
+    <section id="sold" class="section section-sold">
+      <div class="section-inner">
+        <div class="section-head">
+          <h2>Vendidos</h2>
+          <p class="section-note">Ya encontraron nuevo dueño — quedan acá de recuerdo.</p>
+        </div>
+
+        <div id="sold-grid" class="tag-grid">
+          <p class="loading-msg" id="sold-loading">Cargando…</p>
+        </div>
+      </div>
+    </section>
+
     <section id="collection" class="section section-collection">
       <div class="section-inner">
         <div class="section-head">
@@ -81,7 +95,7 @@
           <a href="https://www.instagram.com/fixedgarage.arg/" target="_blank" rel="noopener" class="btn btn-primary">
             Escribir por Instagram
           </a>
-          <a href="https://wa.me/5490000000000" target="_blank" rel="noopener" class="btn btn-ghost">
+          <a href="https://wa.me/5491140280367" target="_blank" rel="noopener" class="btn btn-ghost">
             Escribir por WhatsApp
           </a>
         </div>
@@ -99,8 +113,11 @@
 
   <template id="frame-card-template">
     <article class="frame-card">
-      <div class="frame-card-photo">
-        <img alt="" loading="lazy" />
+      <div class="frame-card-photos">
+        <div class="frame-card-photos-track"></div>
+        <button type="button" class="frame-card-nav-btn prev" aria-label="Foto anterior">‹</button>
+        <button type="button" class="frame-card-nav-btn next" aria-label="Foto siguiente">›</button>
+        <div class="frame-card-dots"></div>
         <span class="frame-stamp"></span>
       </div>
       <div class="frame-tag">
