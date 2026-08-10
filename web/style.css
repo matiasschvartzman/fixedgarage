@@ -420,6 +420,7 @@ h1, h2, h3 {
 }
 
 .frame-size-row:has(.frame-size:empty) { display: none; }
+.frame-condition-row:has(.frame-condition:empty) { display: none; }
 
 .frame-description {
   font-family: var(--font-body);

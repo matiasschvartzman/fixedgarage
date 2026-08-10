@@ -12,7 +12,7 @@ representa exactamente un caso de uso.
 """
 from decimal import Decimal
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 from app.models import FrameStatus
 
@@ -31,6 +31,7 @@ class FrameCreate(BaseModel):
     size: str | None = None
     description: str
     currency: str = "USD"
+    condition: Decimal | None = Field(default=None, ge=1, le=10)
     purchase_price: Decimal | None = None   # lo que pagaste vos; None si no lo cargás
     price: Decimal                          # precio pedido/publicado
 
@@ -42,6 +43,7 @@ class FrameUpdate(BaseModel):
     size: str | None = None
     description: str | None = None
     currency: str | None = None
+    condition: Decimal | None = Field(default=None, ge=1, le=10)
     purchase_price: Decimal | None = None
     price: Decimal | None = None
     status: FrameStatus | None = None
@@ -66,6 +68,7 @@ class FrameOut(BaseModel):
     size: str | None
     description: str
     currency: str
+    condition: Decimal | None = None
     purchase_price: Decimal | None
     price: Decimal
     sold_price: Decimal | None
@@ -89,6 +92,7 @@ class FramePublicOut(BaseModel):
     size: str | None
     description: str
     currency: str
+    condition: Decimal | None = None
     price: Decimal
     price_ars: Decimal | None = None  # se completa en el router, no viene del modelo
     status: FrameStatus

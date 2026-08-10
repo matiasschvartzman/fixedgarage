@@ -236,6 +236,11 @@ function crearFrameCard(cuadro) {
   node.querySelector(".frame-brand").textContent = cuadro.brand;
   node.querySelector(".frame-model").textContent = cuadro.model;
   node.querySelector(".frame-size").textContent = cuadro.size ?? "";
+
+  const condicionEl = node.querySelector(".frame-condition");
+  if (cuadro.condition !== null && cuadro.condition !== undefined) {
+    condicionEl.textContent = `${Number(cuadro.condition).toFixed(2)}/10`;
+  }
   node.querySelector(".frame-description").textContent = cuadro.description;
 
   node.querySelector(".frame-price-usd").textContent =
