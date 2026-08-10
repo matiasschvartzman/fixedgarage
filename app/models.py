@@ -44,8 +44,10 @@ class Frame(Base):
     currency: Mapped[str] = mapped_column(String(3), default="USD")
 
     # Estado físico del cuadro, 1.00-10.00 con decimales (ej. 8.50).
-    # Nullable porque los cuadros cargados antes de este campo no lo tienen.
-    condition: Mapped[Decimal | None] = mapped_column(Numeric(3, 2), nullable=True)
+    # Numeric(4, 2) porque Numeric(3, 2) solo admite hasta 9.99 y el
+    # rango llega a 10.00. Nullable porque los cuadros cargados antes
+    # de este campo no lo tienen.
+    condition: Mapped[Decimal | None] = mapped_column(Numeric(4, 2), nullable=True)
 
     purchase_price: Mapped[Decimal | None] = mapped_column(Numeric(10, 2), nullable=True)
     price: Mapped[Decimal] = mapped_column(Numeric(10, 2))              # precio pedido/publicado
