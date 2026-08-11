@@ -36,21 +36,57 @@ document.addEventListener("DOMContentLoaded", () => {
  * cuadros y de colección), con un listener delegado en document en vez
  * de uno por <img> — así funciona también para las cards que se agregan
  * después de la carga inicial, sin tener que re-engancharlo cada vez.
+ *
+ * Además de abrir la foto en grande, guarda el resto de fotos de ESA
+ * misma card para poder pasar de una a otra sin cerrar el zoom (con los
+ * botones, las flechas del teclado, o deslizando).
  */
 function inicializarLightbox() {
   const lightbox = document.getElementById("lightbox");
   const lightboxImg = lightbox.querySelector(".lightbox-img");
   const closeBtn = lightbox.querySelector(".lightbox-close");
+  const prevBtn = lightbox.querySelector(".lightbox-nav-btn.prev");
+  const nextBtn = lightbox.querySelector(".lightbox-nav-btn.next");
+  const counter = lightbox.querySelector(".lightbox-counter");
 
-  const abrir = (src, alt) => {
-    lightboxImg.src = src;
-    lightboxImg.alt = alt;
+  let imagenesCard = []; // <img> de la card actualmente abierta
+  let indiceActual = 0;
+
+  const mostrarActual = () => {
+    const img = imagenesCard[indiceActual];
+    lightboxImg.src = img.src;
+    lightboxImg.alt = img.alt;
+
+    const hayVarias = imagenesCard.length > 1;
+    prevBtn.hidden = !hayVarias;
+    nextBtn.hidden = !hayVarias;
+    counter.hidden = !hayVarias;
+    if (hayVarias) counter.textContent = `${indiceActual + 1} / ${imagenesCard.length}`;
+  };
+
+  const abrir = (imagenes, indiceInicial) => {
+    imagenesCard = imagenes;
+    indiceActual = indiceInicial;
+    mostrarActual();
     lightbox.hidden = false;
   };
 
   const cerrar = () => {
     lightbox.hidden = true;
     lightboxImg.src = "";
+    imagenesCard = [];
+  };
+
+  const anterior = () => {
+    if (imagenesCard.length <= 1) return;
+    indiceActual = (indiceActual - 1 + imagenesCard.length) % imagenesCard.length;
+    mostrarActual();
+  };
+
+  const siguiente = () => {
+    if (imagenesCard.length <= 1) return;
+    indiceActual = (indiceActual + 1) % imagenesCard.length;
+    mostrarActual();
   };
 
   document.addEventListener("click", (evento) => {
@@ -65,15 +101,42 @@ function inicializarLightbox() {
       return;
     }
 
-    abrir(img.src, img.alt);
+    // Buscamos el resto de fotos de la MISMA card: si tiene carrusel
+    // (frame-card), son las <img> hermanas dentro del mismo track; si
+    // es una card de colección (una sola foto), es solo esta.
+    const imagenes = track
+      ? [...track.querySelectorAll(".frame-card-photo-slide img")]
+      : [img];
+
+    abrir(imagenes, imagenes.indexOf(img));
   });
 
   closeBtn.addEventListener("click", cerrar);
+  prevBtn.addEventListener("click", anterior);
+  nextBtn.addEventListener("click", siguiente);
   lightbox.addEventListener("click", (evento) => {
     if (evento.target === lightbox) cerrar(); // click en el fondo, no en la foto
   });
   document.addEventListener("keydown", (evento) => {
-    if (evento.key === "Escape" && !lightbox.hidden) cerrar();
+    if (lightbox.hidden) return;
+    if (evento.key === "Escape") cerrar();
+    if (evento.key === "ArrowLeft") anterior();
+    if (evento.key === "ArrowRight") siguiente();
+  });
+
+  // Deslizar sobre la foto ampliada (mouse o touch, vía Pointer Events)
+  // para pasar a la siguiente/anterior sin cerrar el zoom.
+  let xInicialSwipe = null;
+  lightboxImg.addEventListener("pointerdown", (evento) => {
+    xInicialSwipe = evento.clientX;
+  });
+  lightboxImg.addEventListener("pointerup", (evento) => {
+    if (xInicialSwipe === null) return;
+    const delta = evento.clientX - xInicialSwipe;
+    xInicialSwipe = null;
+    if (Math.abs(delta) < 40) return; // movimiento chico: no cuenta como swipe
+    if (delta < 0) siguiente();
+    else anterior();
   });
 }
 
