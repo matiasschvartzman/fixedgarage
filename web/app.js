@@ -28,7 +28,54 @@ document.addEventListener("DOMContentLoaded", () => {
   cargarCatalogo();
   cargarColeccion();
   setInterval(actualizarCotizacionEnPantalla, INTERVALO_ACTUALIZACION_COTIZACION_MS);
+  inicializarLightbox();
 });
+
+/**
+ * Zoom de fotos: un solo lightbox compartido por todas las cards (de
+ * cuadros y de colección), con un listener delegado en document en vez
+ * de uno por <img> — así funciona también para las cards que se agregan
+ * después de la carga inicial, sin tener que re-engancharlo cada vez.
+ */
+function inicializarLightbox() {
+  const lightbox = document.getElementById("lightbox");
+  const lightboxImg = lightbox.querySelector(".lightbox-img");
+  const closeBtn = lightbox.querySelector(".lightbox-close");
+
+  const abrir = (src, alt) => {
+    lightboxImg.src = src;
+    lightboxImg.alt = alt;
+    lightbox.hidden = false;
+  };
+
+  const cerrar = () => {
+    lightbox.hidden = true;
+    lightboxImg.src = "";
+  };
+
+  document.addEventListener("click", (evento) => {
+    const img = evento.target.closest(".frame-card-photo-slide img, .collection-card-photo img");
+    if (!img) return;
+
+    // Si el click viene de soltar un drag del carrusel, no es una
+    // intención de hacer zoom — lo ignoramos.
+    const track = img.closest(".frame-card-photos-track");
+    if (track && track.dataset.arrastrado === "1") {
+      track.dataset.arrastrado = "";
+      return;
+    }
+
+    abrir(img.src, img.alt);
+  });
+
+  closeBtn.addEventListener("click", cerrar);
+  lightbox.addEventListener("click", (evento) => {
+    if (evento.target === lightbox) cerrar(); // click en el fondo, no en la foto
+  });
+  document.addEventListener("keydown", (evento) => {
+    if (evento.key === "Escape" && !lightbox.hidden) cerrar();
+  });
+}
 
 /**
  * Trae los cuadros en venta desde /catalogo/ y los pinta en la grilla.
@@ -142,6 +189,7 @@ function habilitarArrastreDesktop(track) {
   track.addEventListener("pointerdown", (evento) => {
     if (evento.pointerType !== "mouse") return;
     arrastrando = true;
+    track.dataset.arrastrado = "";
     track.classList.add("is-dragging");
     track.style.scrollBehavior = "auto";
     posicionInicialX = evento.clientX;
@@ -151,6 +199,11 @@ function habilitarArrastreDesktop(track) {
 
   track.addEventListener("pointermove", (evento) => {
     if (!arrastrando) return;
+    // Si se movió más de unos pocos px, fue un drag, no un click en la
+    // foto — lo marcamos para que el listener del lightbox lo ignore.
+    if (Math.abs(evento.clientX - posicionInicialX) > 5) {
+      track.dataset.arrastrado = "1";
+    }
     track.scrollLeft = scrollInicial - (evento.clientX - posicionInicialX);
   });
 

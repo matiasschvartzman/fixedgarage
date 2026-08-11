@@ -313,6 +313,7 @@ h1, h2, h3 {
   display: block;
   -webkit-user-drag: none;
   user-select: none;
+  cursor: zoom-in;
 }
 
 .frame-card-nav-btn {
@@ -492,6 +493,7 @@ h1, h2, h3 {
   height: 100%;
   object-fit: cover;
   display: block;
+  cursor: zoom-in;
 }
 
 .collection-card-body {
@@ -564,6 +566,50 @@ h1, h2, h3 {
 }
 
 /* ============================================
+   Lightbox — click en una foto para verla completa
+   ============================================ */
+
+.lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 48px;
+  background: rgba(0, 0, 0, 0.92);
+  cursor: zoom-out;
+}
+
+.lightbox[hidden] { display: none; }
+
+.lightbox-img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  border-radius: var(--radius);
+  cursor: default;
+}
+
+.lightbox-close {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 1px solid var(--border-strong);
+  background: rgba(0, 0, 0, 0.65);
+  color: var(--text);
+  font-size: 1.5rem;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+/* ============================================
    Responsive
    ============================================ */
 
@@ -571,4 +617,5 @@ h1, h2, h3 {
   .main-nav { gap: 18px; }
   .hero { padding: 72px 20px 60px; }
   .section { padding: 56px 20px; }
+  .lightbox { padding: 16px; }
 }
