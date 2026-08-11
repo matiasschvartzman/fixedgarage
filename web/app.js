@@ -29,7 +29,40 @@ document.addEventListener("DOMContentLoaded", () => {
   cargarColeccion();
   setInterval(actualizarCotizacionEnPantalla, INTERVALO_ACTUALIZACION_COTIZACION_MS);
   inicializarLightbox();
+  inicializarMusica();
 });
+
+/**
+ * Botón flotante ♪ que abre/cierra un reproductor chico con la playlist
+ * de YouTube. El iframe arranca SIN src en el HTML a propósito — recién
+ * le ponemos la URL (con autoplay=1) cuando el usuario clickea, porque:
+ * 1) así no cargamos YouTube en cada visita si nadie prende la música.
+ * 2) el autoplay con sonido necesita un gesto del usuario para que el
+ *    navegador lo permita, y el click cuenta como ese gesto.
+ * Al cerrar, sacamos el src en vez de solo ocultar el player, así el
+ * audio corta de una en vez de seguir sonando de fondo escondido.
+ */
+function inicializarMusica() {
+  const toggle = document.getElementById("music-toggle");
+  const player = document.getElementById("music-player");
+  const iframe = document.getElementById("music-iframe");
+
+  toggle.addEventListener("click", () => {
+    const estaAbierto = !player.hidden;
+
+    if (estaAbierto) {
+      iframe.src = "";
+      player.hidden = true;
+      toggle.classList.remove("is-active");
+      toggle.setAttribute("aria-expanded", "false");
+    } else {
+      iframe.src = iframe.dataset.src;
+      player.hidden = false;
+      toggle.classList.add("is-active");
+      toggle.setAttribute("aria-expanded", "true");
+    }
+  });
+}
 
 /**
  * Zoom de fotos: un solo lightbox compartido por todas las cards (de

@@ -116,6 +116,20 @@
     <span class="lightbox-counter"></span>
   </div>
 
+  <div id="music-widget" class="music-widget">
+    <div id="music-player" class="music-player" hidden>
+      <iframe
+        id="music-iframe"
+        src=""
+        data-src="https://www.youtube.com/embed/videoseries?list=RDATfkc291bCBtdXNpYw&autoplay=1"
+        title="Playlist de música"
+        allow="autoplay; encrypted-media"
+        allowfullscreen
+      ></iframe>
+    </div>
+    <button type="button" id="music-toggle" class="music-toggle" aria-label="Reproducir música" aria-expanded="false">♪</button>
+  </div>
+
   <template id="frame-card-template">
     <article class="frame-card">
       <div class="frame-card-photos">
