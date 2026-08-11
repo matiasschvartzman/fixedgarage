@@ -711,6 +711,22 @@ h1, h2, h3 {
   .lightbox-nav-btn.prev { left: 6px; }
   .lightbox-nav-btn.next { right: 6px; }
   .music-widget { right: 14px; bottom: 14px; }
+
+  /* En mobile el recuadro de video tapa media pantalla y no aporta
+     nada — acá solo importa el audio. Lo achicamos a invisible (nada
+     de display:none ni visibility:hidden, eso sí puede llegar a
+     pausar la reproducción) y dejamos el ♪ como único control. */
+  .music-player {
+    position: fixed;
+    width: 1px;
+    height: 1px;
+    aspect-ratio: unset;
+    opacity: 0;
+    overflow: hidden;
+    pointer-events: none;
+    border: 0;
+    box-shadow: none;
+  }
 }
 
 .section-about {
