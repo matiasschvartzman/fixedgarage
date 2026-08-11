@@ -33,33 +33,62 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 /**
- * Botón flotante ♪ que abre/cierra un reproductor chico con la playlist
- * de YouTube. El iframe arranca SIN src en el HTML a propósito — recién
- * le ponemos la URL (con autoplay=1) cuando el usuario clickea, porque:
- * 1) así no cargamos YouTube en cada visita si nadie prende la música.
- * 2) el autoplay con sonido necesita un gesto del usuario para que el
- *    navegador lo permita, y el click cuenta como ese gesto.
- * Al cerrar, sacamos el src en vez de solo ocultar el player, así el
- * audio corta de una en vez de seguir sonando de fondo escondido.
+ * Botón flotante ♪ con la playlist de YouTube. Arranca sola al cargar
+ * la página, pero MUTEADA — ningún navegador deja hacer autoplay con
+ * sonido sin que haya habido antes una interacción real del usuario en
+ * la página, no es algo que se pueda evitar desde acá. Para que el
+ * visitante escuche música lo antes posible sin tener que buscar el
+ * botón, la desmuteamos sola en el primer click/toque que haga en
+ * CUALQUIER parte del sitio (no hace falta que sea el ♪).
+ *
+ * El botón sigue sirviendo para cerrarla del todo (corta el audio, no
+ * la deja sonando de fondo escondida) o volver a abrirla — si la abre
+ * a mano, arranca directamente con sonido, porque ese click ya es un
+ * gesto válido para el navegador.
  */
 function inicializarMusica() {
+  const LIST_ID = "RDATfkc291bCBtdXNpYw";
   const toggle = document.getElementById("music-toggle");
   const player = document.getElementById("music-player");
   const iframe = document.getElementById("music-iframe");
 
-  toggle.addEventListener("click", () => {
-    const estaAbierto = !player.hidden;
+  const armarSrc = (muteado) =>
+    `https://www.youtube.com/embed/videoseries?list=${LIST_ID}&autoplay=1&enablejsapi=1&playsinline=1&mute=${muteado ? 1 : 0}`;
 
-    if (estaAbierto) {
-      iframe.src = "";
-      player.hidden = true;
-      toggle.classList.remove("is-active");
-      toggle.setAttribute("aria-expanded", "false");
+  const mostrarActivo = (activo) => {
+    player.hidden = !activo;
+    toggle.classList.toggle("is-active", activo);
+    toggle.setAttribute("aria-expanded", String(activo));
+  };
+
+  const abrir = (muteado) => {
+    iframe.src = armarSrc(muteado);
+    mostrarActivo(true);
+  };
+
+  const cerrar = () => {
+    iframe.src = "";
+    mostrarActivo(false);
+  };
+
+  const desmutear = () => {
+    if (player.hidden || !iframe.contentWindow) return;
+    // Comando del IFrame Player de YouTube vía postMessage: no hace
+    // falta cargar su librería JS completa para mandarle esto.
+    const mandar = (func) =>
+      iframe.contentWindow.postMessage(JSON.stringify({ event: "command", func, args: [] }), "https://www.youtube.com");
+    mandar("unMute");
+    mandar("playVideo");
+  };
+
+  abrir(true); // arranca sola, muteada
+  document.addEventListener("pointerdown", desmutear, { once: true });
+
+  toggle.addEventListener("click", () => {
+    if (player.hidden) {
+      abrir(false); // gesto directo del usuario: arranca con sonido de una
     } else {
-      iframe.src = iframe.dataset.src;
-      player.hidden = false;
-      toggle.classList.add("is-active");
-      toggle.setAttribute("aria-expanded", "true");
+      cerrar();
     }
   });
 }
