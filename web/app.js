@@ -47,18 +47,16 @@ document.addEventListener("DOMContentLoaded", () => {
  * gesto válido para el navegador.
  */
 function inicializarMusica() {
-  // Playlist de "uploads" del canal Chill Soul Radio - Topic
-  // (https://music.youtube.com/channel/UCpPzfgM3IHX1Cfb0mXYTuUQ). Todo
-  // canal de YouTube tiene una playlist automática con sus videos,
-  // cuyo ID se arma cambiando el prefijo "UC" del canal por "UU" — a
-  // diferencia de un Mix ("RD..."), esta SÍ es una lista fija y
-  // ordenada, así que el índice al azar de abajo funciona de verdad.
-  const LIST_ID = "UUpPzfgM3IHX1Cfb0mXYTuUQ";
+  // Playlist guardada real (no un Mix): álbum "SKANKING & JACKING" de
+  // STAND HIGH PATROL. Al ser una lista fija y ordenada, el índice al
+  // azar de abajo funciona de verdad (a diferencia de un Mix "RD...",
+  // que siempre arranca en la misma canción semilla sin importar qué
+  // índice se le mande).
+  const LIST_ID = "PL17alAg5CIXHx6L9sF3CK5_dA7rgBtthH";
   // No sabemos el largo exacto sin pegarle a la Data API de YouTube (de
-  // más está para esto); con un rango generoso alcanza para variar el
-  // arranque. Si el índice se pasa del largo real, YouTube lo clampea
-  // sin romper nada.
-  const LARGO_APROX_PLAYLIST = 25;
+  // más está para esto). Un álbum ronda esta cantidad de temas; si el
+  // índice se pasa del largo real, YouTube lo clampea sin romper nada.
+  const LARGO_APROX_PLAYLIST = 15;
   const toggle = document.getElementById("music-toggle");
   const player = document.getElementById("music-player");
   const iframe = document.getElementById("music-iframe");
