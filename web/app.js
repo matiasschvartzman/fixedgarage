@@ -48,12 +48,19 @@ document.addEventListener("DOMContentLoaded", () => {
  */
 function inicializarMusica() {
   const LIST_ID = "RDATfkc291bCBtdXNpYw";
+  // Los mixes de YouTube suelen tener ~25 canciones. Arrancar cada vez
+  // en un índice al azar dentro de ese rango evita que siempre suene
+  // la misma primera canción (YouTube no expone un "shuffle" real por
+  // URL, pero el parámetro index sí deja elegir por dónde empieza).
+  const LARGO_APROX_MIX = 25;
   const toggle = document.getElementById("music-toggle");
   const player = document.getElementById("music-player");
   const iframe = document.getElementById("music-iframe");
 
-  const armarSrc = (muteado) =>
-    `https://www.youtube.com/embed/videoseries?list=${LIST_ID}&autoplay=1&enablejsapi=1&playsinline=1&mute=${muteado ? 1 : 0}`;
+  const armarSrc = (muteado) => {
+    const indiceAlAzar = Math.floor(Math.random() * LARGO_APROX_MIX);
+    return `https://www.youtube.com/embed/videoseries?list=${LIST_ID}&index=${indiceAlAzar}&autoplay=1&enablejsapi=1&playsinline=1&mute=${muteado ? 1 : 0}`;
+  };
 
   const mostrarActivo = (activo) => {
     player.hidden = !activo;
