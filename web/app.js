@@ -47,18 +47,24 @@ document.addEventListener("DOMContentLoaded", () => {
  * gesto válido para el navegador.
  */
 function inicializarMusica() {
-  const LIST_ID = "RDATfkc291bCBtdXNpYw";
-  // Los mixes de YouTube suelen tener ~25 canciones. Arrancar cada vez
-  // en un índice al azar dentro de ese rango evita que siempre suene
-  // la misma primera canción (YouTube no expone un "shuffle" real por
-  // URL, pero el parámetro index sí deja elegir por dónde empieza).
-  const LARGO_APROX_MIX = 25;
+  // Playlist de "uploads" del canal Chill Soul Radio - Topic
+  // (https://music.youtube.com/channel/UCpPzfgM3IHX1Cfb0mXYTuUQ). Todo
+  // canal de YouTube tiene una playlist automática con sus videos,
+  // cuyo ID se arma cambiando el prefijo "UC" del canal por "UU" — a
+  // diferencia de un Mix ("RD..."), esta SÍ es una lista fija y
+  // ordenada, así que el índice al azar de abajo funciona de verdad.
+  const LIST_ID = "UUpPzfgM3IHX1Cfb0mXYTuUQ";
+  // No sabemos el largo exacto sin pegarle a la Data API de YouTube (de
+  // más está para esto); con un rango generoso alcanza para variar el
+  // arranque. Si el índice se pasa del largo real, YouTube lo clampea
+  // sin romper nada.
+  const LARGO_APROX_PLAYLIST = 25;
   const toggle = document.getElementById("music-toggle");
   const player = document.getElementById("music-player");
   const iframe = document.getElementById("music-iframe");
 
   const armarSrc = (muteado) => {
-    const indiceAlAzar = Math.floor(Math.random() * LARGO_APROX_MIX);
+    const indiceAlAzar = Math.floor(Math.random() * LARGO_APROX_PLAYLIST);
     return `https://www.youtube.com/embed/videoseries?list=${LIST_ID}&index=${indiceAlAzar}&autoplay=1&enablejsapi=1&playsinline=1&mute=${muteado ? 1 : 0}`;
   };
 
