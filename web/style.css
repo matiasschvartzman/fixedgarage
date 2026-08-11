@@ -44,6 +44,13 @@
 
 html { scroll-behavior: smooth; }
 
+html, body {
+  /* Si algún elemento se pasa de ancho (ej. el nav en pantallas
+     angostas), esto evita que arrastre a TODA la página a scroll
+     horizontal — que es lo que se veía como "todo corrido". */
+  overflow-x: hidden;
+}
+
 body {
   margin: 0;
   background: var(--bg);
@@ -114,6 +121,7 @@ h1, h2, h3 {
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--text-muted);
+  white-space: nowrap; /* que un link pase a la línea de abajo entero, no partido a la mitad */
   transition: color 0.15s ease;
 }
 
@@ -703,7 +711,9 @@ h1, h2, h3 {
    ============================================ */
 
 @media (max-width: 640px) {
-  .main-nav { gap: 18px; }
+  .header-inner { flex-wrap: wrap; row-gap: 10px; }
+  .main-nav { flex-wrap: wrap; gap: 12px 16px; }
+  .main-nav a { font-size: 0.78rem; }
   .hero { padding: 72px 20px 60px; }
   .section { padding: 56px 20px; }
   .lightbox { padding: 16px; }
