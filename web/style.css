@@ -717,7 +717,9 @@ h1, h2, h3 {
      de display:none ni visibility:hidden, eso sí puede llegar a
      pausar la reproducción) y dejamos el ♪ como único control. */
   .music-player {
-    position: fixed;
+    /* Sin position:fixed acá: el contenedor .music-widget (padre) ya
+       está fijo en la esquina, esto solo necesita quedar chiquito
+       dentro de su flujo normal, no salirse de él. */
     width: 1px;
     height: 1px;
     aspect-ratio: unset;
