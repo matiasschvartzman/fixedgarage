@@ -183,28 +183,40 @@ async function actualizarCotizacionEnPantalla() {
 
 function habilitarArrastreDesktop(track) {
   let arrastrando = false;
+  let capturado = false; // recién true cuando el movimiento confirma que es un drag
   let posicionInicialX = 0;
   let scrollInicial = 0;
+  let pointerIdActual = null;
 
   track.addEventListener("pointerdown", (evento) => {
     if (evento.pointerType !== "mouse") return;
     arrastrando = true;
+    capturado = false;
     track.dataset.arrastrado = "";
-    track.classList.add("is-dragging");
     track.style.scrollBehavior = "auto";
     posicionInicialX = evento.clientX;
     scrollInicial = track.scrollLeft;
-    track.setPointerCapture(evento.pointerId);
+    pointerIdActual = evento.pointerId;
+    // OJO: no llamamos setPointerCapture acá. Si lo hacemos en todo
+    // pointerdown (incluyendo un simple click sin mover el mouse), el
+    // navegador redirige el "click" posterior a `track` en vez de a la
+    // <img> de abajo, y el lightbox nunca encuentra la foto para abrir.
+    // Por eso esperamos a confirmar que hay arrastre real (ver abajo).
   });
 
   track.addEventListener("pointermove", (evento) => {
     if (!arrastrando) return;
-    // Si se movió más de unos pocos px, fue un drag, no un click en la
-    // foto — lo marcamos para que el listener del lightbox lo ignore.
-    if (Math.abs(evento.clientX - posicionInicialX) > 5) {
+    const delta = evento.clientX - posicionInicialX;
+
+    if (!capturado) {
+      if (Math.abs(delta) <= 5) return; // todavía no sabemos si es drag o click
+      capturado = true;
       track.dataset.arrastrado = "1";
+      track.classList.add("is-dragging");
+      track.setPointerCapture(pointerIdActual);
     }
-    track.scrollLeft = scrollInicial - (evento.clientX - posicionInicialX);
+
+    track.scrollLeft = scrollInicial - delta;
   });
 
   const terminarArrastre = () => {
