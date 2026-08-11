@@ -712,3 +712,23 @@ h1, h2, h3 {
   .lightbox-nav-btn.next { right: 6px; }
   .music-widget { right: 14px; bottom: 14px; }
 }
+
+.section-about {
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+.about-inner {
+  max-width: 100%;
+}
+
+.about-text p {
+  font-size: 1.05rem;
+  line-height: 1.8;
+  color: var(--text);
+  margin: 0 0 28px;
+}
+
+.about-text p:last-child {
+  margin-bottom: 0;
+}
