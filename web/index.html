@@ -129,6 +129,58 @@
     <span class="lightbox-counter"></span>
   </div>
 
+  <!--
+    Modal de detalle de un cuadro: fotos SIN recortar (a diferencia de las
+    cards chicas, que usan object-fit: cover), descripción completa y
+    precio. Es un elemento fijo único (como el lightbox de arriba), no un
+    <template> — se repuebla en JS cada vez que se abre para un cuadro
+    distinto. Ver inicializarDetailModal() en app.js.
+  -->
+  <div id="detail-modal" class="detail-modal" hidden>
+    <div class="detail-modal-backdrop"></div>
+    <div class="detail-modal-panel" role="dialog" aria-modal="true" aria-labelledby="detail-modal-title">
+      <button type="button" class="detail-modal-close" aria-label="Cerrar">×</button>
+
+      <div class="detail-modal-photos">
+        <div class="detail-modal-photos-track"></div>
+        <button type="button" class="detail-modal-nav-btn prev" aria-label="Foto anterior">‹</button>
+        <button type="button" class="detail-modal-nav-btn next" aria-label="Foto siguiente">›</button>
+        <div class="detail-modal-dots"></div>
+        <span class="detail-modal-stamp"></span>
+      </div>
+
+      <div class="detail-modal-body">
+        <h3 id="detail-modal-title" class="detail-modal-title"></h3>
+
+        <div class="detail-modal-specs">
+          <div class="detail-modal-spec-row">
+            <span class="detail-modal-spec-label">Marca</span>
+            <span class="detail-modal-spec-value detail-modal-brand"></span>
+          </div>
+          <div class="detail-modal-spec-row">
+            <span class="detail-modal-spec-label">Modelo</span>
+            <span class="detail-modal-spec-value detail-modal-model"></span>
+          </div>
+          <div class="detail-modal-spec-row detail-modal-size-row">
+            <span class="detail-modal-spec-label">Talle</span>
+            <span class="detail-modal-spec-value detail-modal-size"></span>
+          </div>
+          <div class="detail-modal-spec-row detail-modal-condition-row">
+            <span class="detail-modal-spec-label">Estado</span>
+            <span class="detail-modal-spec-value detail-modal-condition"></span>
+          </div>
+        </div>
+
+        <p class="detail-modal-description"></p>
+
+        <div class="detail-modal-price-block">
+          <span class="detail-modal-price-usd"></span>
+          <span class="detail-modal-price-ars"></span>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div id="music-widget" class="music-widget">
     <div id="music-player" class="music-player" hidden>
       <iframe

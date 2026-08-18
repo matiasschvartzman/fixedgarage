@@ -24,8 +24,18 @@ const ESTADO_LABELS = {
 // catálogo — solo hacemos una cuenta en el navegador y actualizamos texto.
 const elementosDePrecioARS = [];
 
+// Todos los cuadros del catálogo (en venta + vendidos), indexados por id
+// como string. Lo llena cargarCatalogo() y lo usa el modal de detalle
+// para saber qué mostrar cuando se hace click en una card o cuando se
+// entra directo con ?cuadro=ID en la URL.
+const cuadrosPorId = new Map();
+
 document.addEventListener("DOMContentLoaded", () => {
-  cargarCatalogo();
+  const detailModal = inicializarDetailModal();
+  // No usamos await acá: cargarColeccion() no depende de esto y así
+  // arranca en paralelo, igual que antes. El deep-link (?cuadro=ID) recién
+  // puede resolverse una vez que el catálogo terminó de llegar.
+  cargarCatalogo().then(() => abrirCuadroDesdeUrl(detailModal));
   cargarColeccion();
   setInterval(actualizarCotizacionEnPantalla, INTERVALO_ACTUALIZACION_COTIZACION_MS);
   inicializarLightbox();
@@ -214,6 +224,205 @@ function inicializarLightbox() {
 }
 
 /**
+ * Modal de detalle de un cuadro: fotos SIN recortar, ficha completa
+ * (marca, modelo, talle, estado, descripción) y precio. Es un modal único
+ * y fijo (#detail-modal en index.html), igual de espíritu que el
+ * lightbox — se repuebla en JS cada vez que se abre.
+ *
+ * Además sincroniza la URL con history.pushState: abrir agrega
+ * ?cuadro=ID, cerrar lo saca, y navegar con atrás/adelante del navegador
+ * (evento popstate) abre o cierra el modal según corresponda. Así un
+ * link tipo fixedgarage.netlify.app/?cuadro=5 sirve para compartir en
+ * redes: quien lo abre llega directo a esa pieza (ver abrirCuadroDesdeUrl,
+ * que se llama una sola vez al cargar la página).
+ *
+ * El carrusel de fotos reutiliza habilitarArrastreDesktop() tal cual —
+ * es la misma función genérica que ya usan las cards del catálogo, no
+ * hizo falta tocarla. El resto (armar slides, dots, flechas) es una
+ * versión propia adaptada a que este modal se repuebla en cada apertura,
+ * a diferencia de una card que arma su carrusel una sola vez.
+ */
+function inicializarDetailModal() {
+  const modal = document.getElementById("detail-modal");
+  const backdrop = modal.querySelector(".detail-modal-backdrop");
+  const closeBtn = modal.querySelector(".detail-modal-close");
+  const track = modal.querySelector(".detail-modal-photos-track");
+  const prevBtn = modal.querySelector(".detail-modal-nav-btn.prev");
+  const nextBtn = modal.querySelector(".detail-modal-nav-btn.next");
+  const dotsContainer = modal.querySelector(".detail-modal-dots");
+  const stamp = modal.querySelector(".detail-modal-stamp");
+  const titleEl = modal.querySelector(".detail-modal-title");
+  const brandEl = modal.querySelector(".detail-modal-brand");
+  const modelEl = modal.querySelector(".detail-modal-model");
+  const sizeEl = modal.querySelector(".detail-modal-size");
+  const condicionEl = modal.querySelector(".detail-modal-condition");
+  const descripcionEl = modal.querySelector(".detail-modal-description");
+  const precioUsdEl = modal.querySelector(".detail-modal-price-usd");
+  const precioArsEl = modal.querySelector(".detail-modal-price-ars");
+
+  let totalFotos = 0;
+
+  const irASlide = (indice) => {
+    const indiceValido = Math.max(0, Math.min(indice, totalFotos - 1));
+    track.scrollTo({ left: indiceValido * track.clientWidth, behavior: "smooth" });
+  };
+
+  const marcarDotActivo = () => {
+    const indiceActual = Math.round(track.scrollLeft / track.clientWidth);
+    [...dotsContainer.children].forEach((dot, indice) => dot.classList.toggle("active", indice === indiceActual));
+  };
+
+  // Estos handlers se enganchan UNA sola vez (el modal es un único
+  // elemento fijo que se repuebla, no se clona): prev/next/track son
+  // siempre los mismos nodos, solo cambian las fotos adentro.
+  prevBtn.addEventListener("click", () => irASlide(Math.round(track.scrollLeft / track.clientWidth) - 1));
+  nextBtn.addEventListener("click", () => irASlide(Math.round(track.scrollLeft / track.clientWidth) + 1));
+  track.addEventListener("scroll", marcarDotActivo);
+  habilitarArrastreDesktop(track);
+
+  const renderFotos = (fotos, alt) => {
+    track.innerHTML = "";
+    dotsContainer.innerHTML = "";
+    totalFotos = fotos.length;
+
+    fotos.forEach((foto) => {
+      const slide = document.createElement("div");
+      slide.className = "detail-modal-photo-slide";
+      const img = document.createElement("img");
+      img.src = foto.url;
+      img.alt = alt;
+      img.loading = "lazy";
+      slide.appendChild(img);
+      track.appendChild(slide);
+    });
+    track.scrollLeft = 0;
+
+    const hayVarias = totalFotos > 1;
+    prevBtn.hidden = !hayVarias;
+    nextBtn.hidden = !hayVarias;
+    dotsContainer.hidden = !hayVarias;
+
+    if (hayVarias) {
+      fotos.forEach((_, indice) => {
+        const dot = document.createElement("span");
+        dot.className = "detail-modal-dot";
+        if (indice === 0) dot.classList.add("active");
+        dotsContainer.appendChild(dot);
+      });
+    }
+  };
+
+  const sincronizarUrl = (cuadroId) => {
+    const url = new URL(window.location.href);
+    if (cuadroId === null) {
+      if (!url.searchParams.has("cuadro")) return; // ya estaba limpia, no ensuciamos el historial
+      url.searchParams.delete("cuadro");
+    } else {
+      url.searchParams.set("cuadro", cuadroId);
+    }
+    history.pushState({ cuadroId }, "", url);
+  };
+
+  const abrir = (cuadro, { actualizarUrl = true } = {}) => {
+    const alt = `${cuadro.brand} ${cuadro.model}`;
+    renderFotos(cuadro.photos ?? [], alt);
+
+    stamp.textContent = ESTADO_LABELS[cuadro.status] ?? cuadro.status;
+    stamp.className = "detail-modal-stamp"; // limpia el status-* de la apertura anterior
+    stamp.classList.add(`status-${cuadro.status}`);
+
+    titleEl.textContent = alt;
+    brandEl.textContent = cuadro.brand;
+    modelEl.textContent = cuadro.model;
+    sizeEl.textContent = cuadro.size ?? "";
+    condicionEl.textContent =
+      cuadro.condition !== null && cuadro.condition !== undefined ? `${Number(cuadro.condition).toFixed(2)}/10` : "";
+    descripcionEl.textContent = cuadro.description ?? "";
+
+    precioUsdEl.textContent = `${cuadro.currency} ${new Intl.NumberFormat("en-US").format(cuadro.price)}`;
+    precioArsEl.textContent = cuadro.price_ars
+      ? `≈ $${new Intl.NumberFormat("es-AR").format(cuadro.price_ars)} ARS`
+      : "";
+
+    modal.hidden = false;
+    document.body.style.overflow = "hidden"; // evita el scroll de fondo con el modal abierto
+
+    if (actualizarUrl) sincronizarUrl(cuadro.id);
+  };
+
+  const cerrar = ({ actualizarUrl = true } = {}) => {
+    if (modal.hidden) return;
+    modal.hidden = true;
+    track.innerHTML = "";
+    document.body.style.overflow = "";
+
+    if (actualizarUrl) sincronizarUrl(null);
+  };
+
+  closeBtn.addEventListener("click", () => cerrar());
+  backdrop.addEventListener("click", () => cerrar());
+
+  document.addEventListener("keydown", (evento) => {
+    if (modal.hidden) return;
+    if (evento.key === "Escape") cerrar();
+    if (evento.key === "ArrowLeft") irASlide(Math.round(track.scrollLeft / track.clientWidth) - 1);
+    if (evento.key === "ArrowRight") irASlide(Math.round(track.scrollLeft / track.clientWidth) + 1);
+  });
+
+  // Click delegado en las cards del catálogo ("En venta" y "Vendidos"
+  // comparten el mismo template .frame-card, así que ambas quedan
+  // clickeables acá). Si el click cae dentro de .frame-card-photos (la
+  // foto, sus flechas o los dots del carrusel chico), lo dejamos pasar
+  // de largo: esa zona sigue siendo del lightbox de zoom, sin tocarlo.
+  document.addEventListener("click", (evento) => {
+    const card = evento.target.closest(".frame-card");
+    if (!card) return;
+    if (evento.target.closest(".frame-card-photos")) return;
+
+    const cuadro = cuadrosPorId.get(card.dataset.cuadroId);
+    if (!cuadro) return;
+    abrir(cuadro);
+  });
+
+  // Atrás/adelante del navegador: si el usuario navega así, sincronizamos
+  // el modal con lo que la URL diga en ese momento (sin volver a pushear).
+  window.addEventListener("popstate", () => {
+    const id = new URLSearchParams(window.location.search).get("cuadro");
+    const cuadro = id ? cuadrosPorId.get(id) : null;
+    if (cuadro) {
+      abrir(cuadro, { actualizarUrl: false });
+    } else {
+      cerrar({ actualizarUrl: false });
+    }
+  });
+
+  return { abrir, cerrar };
+}
+
+/**
+ * Deep link: si la página se abrió con ?cuadro=ID en la URL (ej. un
+ * sticker de link en una story de Instagram apuntando a una pieza
+ * puntual), abre el modal de detalle de ESE cuadro apenas termina de
+ * cargar el catálogo — sin que haga falta ningún click.
+ *
+ * Se llama una sola vez, después de que cargarCatalogo() resuelve (ver
+ * DOMContentLoaded), porque hasta ese momento cuadrosPorId está vacío.
+ * Si el id no viene, no existe, o el catálogo no pudo cargar, no hace
+ * nada — la persona simplemente ve el catálogo general.
+ */
+function abrirCuadroDesdeUrl(detailModal) {
+  const id = new URLSearchParams(window.location.search).get("cuadro");
+  if (!id) return;
+
+  const cuadro = cuadrosPorId.get(id);
+  if (!cuadro) return;
+
+  // No actualizamos la URL: ya trae el ?cuadro=ID puesto por quien
+  // compartió el link, no hace falta pushear una entrada nueva encima.
+  detailModal.abrir(cuadro, { actualizarUrl: false });
+}
+
+/**
  * Trae los cuadros en venta desde /catalogo/ y los pinta en la grilla.
  * Si la API falla (backend apagado, CORS, etc.), mostramos un mensaje
  * en vez de dejar la sección en blanco sin explicación.
@@ -233,6 +442,12 @@ async function cargarCatalogo() {
       const formateado = new Intl.NumberFormat("es-AR").format(cotizacion.dolar_blue_venta);
       cotizacionInfo.textContent = `Dólar blue: $${formateado}`;
     }
+
+    // Guardamos TODOS los cuadros (en venta + vendidos) por id, para que
+    // el modal de detalle pueda abrir cualquiera de los dos sin volver a
+    // pedirle nada a la API — tanto desde un click en una card como desde
+    // un link directo con ?cuadro=ID.
+    cuadros.forEach((cuadro) => cuadrosPorId.set(String(cuadro.id), cuadro));
 
     // Separamos vendidos del resto: "En venta" muestra disponibles/reservados,
     // "Vendidos" es una sección aparte con el sello puesto.
@@ -372,6 +587,11 @@ function habilitarArrastreDesktop(track) {
 function crearFrameCard(cuadro) {
   const template = document.getElementById("frame-card-template");
   const node = template.content.cloneNode(true);
+
+  // Id del cuadro en el propio DOM de la card: así el click delegado del
+  // modal de detalle (ver inicializarDetailModal) sabe qué cuadro mostrar
+  // sin tener que reconstruirlo a mano desde los textos ya pintados.
+  node.querySelector(".frame-card").dataset.cuadroId = cuadro.id;
 
   const photosContainer = node.querySelector(".frame-card-photos");
   const track = node.querySelector(".frame-card-photos-track");
