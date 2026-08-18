@@ -298,7 +298,7 @@ function inicializarDetailModal() {
     }
   };
 
-  const sincronizarUrl = (cuadroId) => {
+  const sincronizarUrl = (cuadroId, modo = "push") => {
     // Arrancamos de origin+pathname, NO de la URL actual completa: si
     // partiéramos de window.location.href arrastraríamos cualquier
     // parámetro de tracking que ya traiga la visita (utm_source, fbclid...
@@ -310,10 +310,19 @@ function inicializarDetailModal() {
     if (cuadroId !== null) url.searchParams.set("cuadro", cuadroId);
 
     if (url.href === window.location.href) return; // ya está así, no ensuciamos el historial
-    history.pushState({ cuadroId }, "", url);
+
+    // "replace" para el deep-link inicial (ver abrirCuadroDesdeUrl): no
+    // queremos una entrada nueva de historial por la limpieza automática,
+    // solo corregir la que ya está. "push" (default) es para aperturas o
+    // cierres que sí son una acción real del usuario (click/Escape/etc.).
+    if (modo === "replace") {
+      history.replaceState({ cuadroId }, "", url);
+    } else {
+      history.pushState({ cuadroId }, "", url);
+    }
   };
 
-  const abrir = (cuadro, { actualizarUrl = true } = {}) => {
+  const abrir = (cuadro, { actualizarUrl = true, modoHistorial = "push" } = {}) => {
     const alt = `${cuadro.brand} ${cuadro.model}`;
     renderFotos(cuadro.photos ?? [], alt);
 
@@ -337,7 +346,7 @@ function inicializarDetailModal() {
     modal.hidden = false;
     document.body.style.overflow = "hidden"; // evita el scroll de fondo con el modal abierto
 
-    if (actualizarUrl) sincronizarUrl(cuadro.id);
+    if (actualizarUrl) sincronizarUrl(cuadro.id, modoHistorial);
   };
 
   const cerrar = ({ actualizarUrl = true } = {}) => {
@@ -399,6 +408,10 @@ function inicializarDetailModal() {
  * DOMContentLoaded), porque hasta ese momento cuadrosPorId está vacío.
  * Si el id no viene, no existe, o el catálogo no pudo cargar, no hace
  * nada — la persona simplemente ve el catálogo general.
+ *
+ * También deja la URL limpia (solo ?cuadro=ID, sin tracking de
+ * Instagram/Meta) apenas termina de cargar — ver el modoHistorial:
+ * "replace" en la llamada a abrir() más abajo.
  */
 function abrirCuadroDesdeUrl(detailModal) {
   const id = new URLSearchParams(window.location.search).get("cuadro");
@@ -407,9 +420,13 @@ function abrirCuadroDesdeUrl(detailModal) {
   const cuadro = cuadrosPorId.get(id);
   if (!cuadro) return;
 
-  // No actualizamos la URL: ya trae el ?cuadro=ID puesto por quien
-  // compartió el link, no hace falta pushear una entrada nueva encima.
-  detailModal.abrir(cuadro, { actualizarUrl: false });
+  // Sí actualizamos la URL, pero con "replace": si se entró desde un link
+  // de Instagram, la página carga con utm_source/fbclid pegados además de
+  // cuadro=ID — replaceState corrige eso a un ?cuadro=ID limpio sin sumar
+  // una entrada nueva al historial (no es una acción del usuario, es la
+  // carga inicial). Así, si la persona copia la barra para volver a
+  // compartir esta misma pieza, el link que se lleva ya es corto.
+  detailModal.abrir(cuadro, { modoHistorial: "replace" });
 }
 
 /**
