@@ -43,18 +43,14 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 /**
- * Botón flotante ♪ con la playlist de YouTube. Arranca sola al cargar
- * la página, pero MUTEADA — ningún navegador deja hacer autoplay con
- * sonido sin que haya habido antes una interacción real del usuario en
- * la página, no es algo que se pueda evitar desde acá. Para que el
- * visitante escuche música lo antes posible sin tener que buscar el
- * botón, la desmuteamos sola en el primer click/toque que haga en
- * CUALQUIER parte del sitio (no hace falta que sea el ♪).
+ * Botón flotante ♪ con la playlist de YouTube. NO arranca sola: hasta que
+ * el visitante no toca el botón, no se carga ni suena nada — antes se
+ * abría sola muteada al cargar la página, pero eso quedó afuera a pedido:
+ * la música tiene que ser 100% una elección del visitante.
  *
- * El botón sigue sirviendo para cerrarla del todo (corta el audio, no
- * la deja sonando de fondo escondida) o volver a abrirla — si la abre
- * a mano, arranca directamente con sonido, porque ese click ya es un
- * gesto válido para el navegador.
+ * Un click en el botón la abre (con sonido de una, porque ese click ya es
+ * el gesto que el navegador exige para permitir audio) y otro click la
+ * cierra del todo (corta el audio, no la deja sonando de fondo escondida).
  */
 function inicializarMusica() {
   // Playlist guardada real (no un Mix): álbum "SKANKING & JACKING" de
@@ -71,13 +67,12 @@ function inicializarMusica() {
   const player = document.getElementById("music-player");
   const iframe = document.getElementById("music-iframe");
 
-  const armarSrc = (muteado) => {
+  const armarSrc = () => {
     const indiceAlAzar = Math.floor(Math.random() * LARGO_APROX_PLAYLIST);
     // OJO con `index`: YouTube lo ignora en silencio si no va acompañado de
     // `listType=playlist` — sin este parámetro, el embed arranca siempre en
-    // la posición 0 sin importar qué índice le mandemos. Este era el motivo
-    // real de que siempre sonara la misma canción.
-    return `https://www.youtube.com/embed/videoseries?list=${LIST_ID}&listType=playlist&index=${indiceAlAzar}&autoplay=1&enablejsapi=1&playsinline=1&mute=${muteado ? 1 : 0}`;
+    // la posición 0 sin importar qué índice le mandemos.
+    return `https://www.youtube.com/embed/videoseries?list=${LIST_ID}&listType=playlist&index=${indiceAlAzar}&autoplay=1&enablejsapi=1&playsinline=1`;
   };
 
   const mostrarActivo = (activo) => {
@@ -86,8 +81,8 @@ function inicializarMusica() {
     toggle.setAttribute("aria-expanded", String(activo));
   };
 
-  const abrir = (muteado) => {
-    iframe.src = armarSrc(muteado);
+  const abrir = () => {
+    iframe.src = armarSrc();
     mostrarActivo(true);
   };
 
@@ -96,22 +91,9 @@ function inicializarMusica() {
     mostrarActivo(false);
   };
 
-  const desmutear = () => {
-    if (player.hidden || !iframe.contentWindow) return;
-    // Comando del IFrame Player de YouTube vía postMessage: no hace
-    // falta cargar su librería JS completa para mandarle esto.
-    const mandar = (func) =>
-      iframe.contentWindow.postMessage(JSON.stringify({ event: "command", func, args: [] }), "https://www.youtube.com");
-    mandar("unMute");
-    mandar("playVideo");
-  };
-
-  abrir(true); // arranca sola, muteada
-  document.addEventListener("pointerdown", desmutear, { once: true });
-
   toggle.addEventListener("click", () => {
     if (player.hidden) {
-      abrir(false); // gesto directo del usuario: arranca con sonido de una
+      abrir(); // gesto directo del usuario: arranca con sonido de una
     } else {
       cerrar();
     }
