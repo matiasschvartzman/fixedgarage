@@ -299,13 +299,17 @@ function inicializarDetailModal() {
   };
 
   const sincronizarUrl = (cuadroId) => {
-    const url = new URL(window.location.href);
-    if (cuadroId === null) {
-      if (!url.searchParams.has("cuadro")) return; // ya estaba limpia, no ensuciamos el historial
-      url.searchParams.delete("cuadro");
-    } else {
-      url.searchParams.set("cuadro", cuadroId);
-    }
+    // Arrancamos de origin+pathname, NO de la URL actual completa: si
+    // partiéramos de window.location.href arrastraríamos cualquier
+    // parámetro de tracking que ya traiga la visita (utm_source, fbclid...
+    // típico al entrar desde un link de Instagram) y el link se iba
+    // haciendo cada vez más largo con cada click. Así el resultado —lo
+    // que alguien copiaría de la barra para compartir— es siempre corto:
+    // nada más que ?cuadro=ID, o la URL pelada si no hay ninguno abierto.
+    const url = new URL(window.location.origin + window.location.pathname);
+    if (cuadroId !== null) url.searchParams.set("cuadro", cuadroId);
+
+    if (url.href === window.location.href) return; // ya está así, no ensuciamos el historial
     history.pushState({ cuadroId }, "", url);
   };
 
