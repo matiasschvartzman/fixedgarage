@@ -73,7 +73,11 @@ function inicializarMusica() {
 
   const armarSrc = (muteado) => {
     const indiceAlAzar = Math.floor(Math.random() * LARGO_APROX_PLAYLIST);
-    return `https://www.youtube.com/embed/videoseries?list=${LIST_ID}&index=${indiceAlAzar}&autoplay=1&enablejsapi=1&playsinline=1&mute=${muteado ? 1 : 0}`;
+    // OJO con `index`: YouTube lo ignora en silencio si no va acompañado de
+    // `listType=playlist` — sin este parámetro, el embed arranca siempre en
+    // la posición 0 sin importar qué índice le mandemos. Este era el motivo
+    // real de que siempre sonara la misma canción.
+    return `https://www.youtube.com/embed/videoseries?list=${LIST_ID}&listType=playlist&index=${indiceAlAzar}&autoplay=1&enablejsapi=1&playsinline=1&mute=${muteado ? 1 : 0}`;
   };
 
   const mostrarActivo = (activo) => {
